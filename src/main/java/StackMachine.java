@@ -40,11 +40,10 @@ public class StackMachine {
     }
 
     //вычисление операций и запись результатов в "стек"
-    void letGo(LinkedList<Integer> st, char oper) {
+    void letGo(LinkedList st, char oper) {
 
-
-        int someOne = st.removeLast();
-        int someTwo = st.removeLast();
+        int someOne = (Integer)st.removeLast();
+        float someTwo = (Float)st.removeLast();
 
 
         switch(oper) {
@@ -61,16 +60,16 @@ public class StackMachine {
                 st.add(someTwo / someOne);
                 break;
             default:
-                System.out.println("Oops");
+                System.out.println("Unknown operation");
         }
     }
 
     //Парсер и результат
-    int eval(String s) {
+    Object eval(String s) {
 
         // Связные списки для операций и чисел
-        LinkedList<Integer> someInts = new LinkedList<>();
-        LinkedList<Character> someOpers = new LinkedList<>();
+        LinkedList digits = new LinkedList<>();
+        LinkedList<Character> operators = new LinkedList<>();
 
         // Цикл пробегает по входной строке
         for(int i = 0; i < s.length(); i++) {
@@ -79,25 +78,25 @@ public class StackMachine {
 
             if(c == '(') {
 
-                someOpers.add('(');
+                operators.add('(');
 
             }
 
             else if (c == ')') {
 
-                while(someOpers.getLast() != '(') {
-                    letGo(someInts, someOpers.removeLast());
+                while(operators.getLast() != '(') {
+                    letGo(digits, operators.removeLast());
                 }
-                someOpers.removeLast();
+                operators.removeLast();
             }
 
             else if (isOperator(c)) {
-                while(!someOpers.isEmpty() &&
-                        priority(someOpers.getLast()) >= priority(c)) {
-                    letGo(someInts, someOpers.removeLast());
+                while(!operators.isEmpty() &&
+                        priority(operators.getLast()) >= priority(c)) {
+                    letGo(digits, operators.removeLast());
                 }
 
-                someOpers.add(c);
+                operators.add(c);
             }
 
 
@@ -105,28 +104,34 @@ public class StackMachine {
 
 
                 String operand = "";
-
+                boolean isFloat = false;
 
                 while(i < s.length() &&
-                        Character.isDigit(s.charAt(i))) {
-
+                        (Character.isDigit(s.charAt(i))||s.charAt(i)=='.')) {
+                    if (s.charAt(i)=='.') isFloat=true;
                     operand += s.charAt(i++);
 
                 }
 
                 --i;
-                someInts.add(Integer.parseInt(operand));
+
+                if (isFloat) {
+                    digits.add(Float.parseFloat(operand));
+                }
+                else {
+                    digits.add(Integer.parseInt(operand));
+                }
 
             }
         }
 
 
-        while(!someOpers.isEmpty()) {
+        while(!operators.isEmpty()) {
 
-            letGo(someInts, someOpers.removeLast());
+            letGo(digits, operators.removeLast());
 
         }
 
-        return someInts.get(0);
+        return digits.get(0);
     }
 }
