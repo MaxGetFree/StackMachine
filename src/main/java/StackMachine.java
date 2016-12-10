@@ -3,9 +3,7 @@ import java.util.Scanner;
 import java.util.Stack;
 import java.util.StringTokenizer;
 
-/**
- * Created by franc on 09.12.2016.
- */
+
 public class StackMachine {
 
     public static void main(String args[])
@@ -40,24 +38,43 @@ public class StackMachine {
     }
 
     //вычисление операций и запись результатов в "стек"
+    //достаём из стека два последних числа и выполняем над ними операцию
     void letGo(LinkedList st, char oper) {
 
-        int someOne = (Integer)st.removeLast();
-        float someTwo = (Float)st.removeLast();
 
+        float firstDigit;
+        float secondDigit;
+        
+        if (st.getLast().getClass()==Integer.class)
+        {
+            firstDigit = (Integer)st.removeLast();
+        }
+        else
+        {
+            firstDigit = (Float)st.removeLast();
+        }
+
+        if (st.getLast().getClass()==Integer.class)
+        {
+            secondDigit = (Integer)st.removeLast();
+        }
+        else
+        {
+            secondDigit = (Float)st.removeLast();
+        }
 
         switch(oper) {
             case '+':
-                st.add(someTwo + someOne);
+                st.add(secondDigit + firstDigit);
                 break;
             case '-':
-                st.add(someTwo - someOne);
+                st.add(secondDigit - firstDigit);
                 break;
             case '*':
-                st.add(someTwo * someOne);
+                st.add(secondDigit * firstDigit);
                 break;
             case '/':
-                st.add(someTwo / someOne);
+                st.add(secondDigit / firstDigit);
                 break;
             default:
                 System.out.println("Unknown operation");
@@ -81,7 +98,8 @@ public class StackMachine {
                 operators.add('(');
 
             }
-
+            //Если встретили закрывающуюся скобку, выполняем все операции, удаляя их при этом из стека
+            //Пока не встрем соответствующую открывающуюся скобку
             else if (c == ')') {
 
                 while(operators.getLast() != '(') {
@@ -90,6 +108,9 @@ public class StackMachine {
                 operators.removeLast();
             }
 
+            /*Добавляем операторы в стек ( если приоритет последнего оператора в стеке больше приоритета
+            текущего оператора, то необходимо выполнить операцию)
+             */
             else if (isOperator(c)) {
                 while(!operators.isEmpty() &&
                         priority(operators.getLast()) >= priority(c)) {
@@ -99,10 +120,10 @@ public class StackMachine {
                 operators.add(c);
             }
 
-
+            /*добавляем числа в стек, цикл для двузначных и более чисел
+            несколько чисел идущих подряд записываются в строку operand, затем преобразуем в число
+             */
             else {
-
-
                 String operand = "";
                 boolean isFloat = false;
 
@@ -125,7 +146,7 @@ public class StackMachine {
             }
         }
 
-
+        //выполняем оставшиеся в стеке операции
         while(!operators.isEmpty()) {
 
             letGo(digits, operators.removeLast());
