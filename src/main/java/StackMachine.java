@@ -1,9 +1,10 @@
-import java.util.LinkedList;
-import java.util.Scanner;
-import java.util.Stack;
-import java.util.StringTokenizer;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-
+/**
+ * Created by franc on 09.12.2016.
+ */
 public class StackMachine {
 
     public static void main(String args[])
@@ -12,147 +13,223 @@ public class StackMachine {
         Scanner in = new Scanner(System.in);
         String input = in.nextLine();
         StackMachine sm = new StackMachine();
-        System.out.println(sm.eval(input));
+        System.out.println(sm.parse(input));
     }
 
+    //Здесь всякие функции тригонометрические можно добавить
+    private final String[] FUNCTIONS = { "sin", "cos" };
+    //Разделитель для входных строк
+    private final String SEPARATOR = ";";
+
+    private final String OPERATORS = "+-*/";
+
     //разбор операторов
-    boolean isOperator(char c)
+    boolean isOperator(String tok) {
+        return OPERATORS.contains(tok);
+    }
+
+    //разбор функций
+    private boolean isFunction(String tok) {
+        for (String item : FUNCTIONS) {
+            if (item.equals(tok)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //Является ли строка математическим выражением
+    boolean isExpression (String someToken)
     {
-        return c=='+'||c=='-'||c=='*'||c=='/';
+        boolean flag = false;
+
+        //Делим строку someToken на подстроки( в качестве разделителей используются операторы и скобки)
+        StringTokenizer stringTokenizer = new StringTokenizer(someToken, OPERATORS + "()", false);
+        //Пробегаем по полученным подстрокам
+        while (stringTokenizer.hasMoreTokens())
+        {
+            String token = stringTokenizer.nextToken();
+            //Если полученная подстрока - функция, ставим флаг true
+            if (isFunction(token)){
+                flag=true;
+            }
+            else {
+                //Если полученная подстрока - число, ставим флаг true
+                try
+                {
+                    Double.parseDouble(token);
+                    flag=true;
+
+                }
+                //Если встречаем что-то кроме функций и чисел, ставим флаг false и выходим из цикла
+                catch (NumberFormatException e)
+                {
+                    flag=false;
+                    break;
+                }
+            }
+        }
+        return flag;
     }
 
     //приоритет операций
-    int priority(char oper) {
-
-        if(oper == '*' || oper == '/') {
+    int priority(String oper) {
+        if (oper.equals("+") || oper.equals("-")) {
             return 1;
         }
-
-        else if(oper == '+' || oper == '-') {
+        else if (oper.equals("(")||oper.equals(")")) {
             return 0;
         }
+        else return 2;
 
-        else {
-            return -1;
-        }
     }
 
     //вычисление операций и запись результатов в "стек"
     //достаём из стека два последних числа и выполняем над ними операцию
-    void letGo(LinkedList st, char oper) {
+    void calculate(LinkedList<Double> st, String oper) {
 
-
-        float firstDigit;
-        float secondDigit;
-        
-        if (st.getLast().getClass()==Integer.class)
+        double firstDigit;
+        double secondDigit;
+        if (isFunction(oper))
         {
-            firstDigit = (Integer)st.removeLast();
+            firstDigit = st.removeLast();
+            switch(oper) {
+                case "cos":
+                    st.add(Math.cos(firstDigit));
+                    break;
+                case "sin":
+                    st.add(Math.sin(firstDigit));
+                    break;
+            }
         }
         else
         {
-            firstDigit = (Float)st.removeLast();
+            firstDigit = st.removeLast();
+            secondDigit = st.removeLast();
+            switch(oper) {
+                case "+":
+                    st.add(secondDigit + firstDigit);
+                    break;
+                case "-":
+                    st.add(secondDigit - firstDigit);
+                    break;
+                case "*":
+                    st.add(secondDigit * firstDigit);
+                    break;
+                case "/":
+                    st.add(secondDigit / firstDigit);
+                    break;
+            }
         }
 
-        if (st.getLast().getClass()==Integer.class)
-        {
-            secondDigit = (Integer)st.removeLast();
-        }
-        else
-        {
-            secondDigit = (Float)st.removeLast();
-        }
-
-        switch(oper) {
-            case '+':
-                st.add(secondDigit + firstDigit);
-                break;
-            case '-':
-                st.add(secondDigit - firstDigit);
-                break;
-            case '*':
-                st.add(secondDigit * firstDigit);
-                break;
-            case '/':
-                st.add(secondDigit / firstDigit);
-                break;
-            default:
-                System.out.println("Unknown operation");
-        }
     }
 
-    //Парсер и результат
-    Object eval(String s) {
+
+
+    //Парсер выражения и вычисление результата
+    Double eval(String s) {
 
         // Связные списки для операций и чисел
-        LinkedList digits = new LinkedList<>();
-        LinkedList<Character> operators = new LinkedList<>();
+        LinkedList<Double> digits = new LinkedList<>();
+        LinkedList<String> operators = new LinkedList<>();
 
-        // Цикл пробегает по входной строке
-        for(int i = 0; i < s.length(); i++) {
+        StringTokenizer stringTokenizer = new StringTokenizer(s, OPERATORS+"()", true);
+        while (stringTokenizer.hasMoreTokens())
+        {
+            String token = stringTokenizer.nextToken();
 
-            char c = s.charAt(i);
-
-            if(c == '(') {
-
-                operators.add('(');
-
+            if(token.equals("(")) {
+                operators.add("(");
             }
-            //Если встретили закрывающуюся скобку, выполняем все операции, удаляя их при этом из стека
-            //Пока не встрем соответствующую открывающуюся скобку
-            else if (c == ')') {
 
-                while(operators.getLast() != '(') {
-                    letGo(digits, operators.removeLast());
+            //Если встретили закрывающуюся скобку, выполняем все операции до открывающейся, удаляя их при этом из стека
+            else if (token.equals(")")) {
+
+                while(!operators.getLast().equals("(")) {
+                    calculate(digits, operators.removeLast());
                 }
-                operators.removeLast();
+               operators.removeLast();
             }
 
-            /*Добавляем операторы в стек ( если приоритет последнего оператора в стеке больше приоритета
-            текущего оператора, то необходимо выполнить операцию)
-             */
-            else if (isOperator(c)) {
+            //Добавляем операторы и функции в стек и вычисляем предшествующий если приоритет больше или равен
+            else if (isOperator(token)||isFunction(token)) {
                 while(!operators.isEmpty() &&
-                        priority(operators.getLast()) >= priority(c)) {
-                    letGo(digits, operators.removeLast());
+                        priority(operators.getLast()) >= priority(token)) {
+                    calculate(digits, operators.removeLast());
                 }
-
-                operators.add(c);
+                operators.add(token);
             }
 
-            /*добавляем числа в стек, цикл для двузначных и более чисел
-            несколько чисел идущих подряд записываются в строку operand, затем преобразуем в число
-             */
+            //добавляем числа в стек
             else {
-                String operand = "";
-                boolean isFloat = false;
-
-                while(i < s.length() &&
-                        (Character.isDigit(s.charAt(i))||s.charAt(i)=='.')) {
-                    if (s.charAt(i)=='.') isFloat=true;
-                    operand += s.charAt(i++);
-
-                }
-
-                --i;
-
-                if (isFloat) {
-                    digits.add(Float.parseFloat(operand));
-                }
-                else {
-                    digits.add(Integer.parseInt(operand));
-                }
-
+                digits.add(Double.parseDouble(token));
             }
         }
 
-        //выполняем оставшиеся в стеке операции
+        //Вычисляем оставшиеся операторы
         while(!operators.isEmpty()) {
-
-            letGo(digits, operators.removeLast());
-
+            calculate(digits, operators.removeLast());
         }
 
         return digits.get(0);
     }
+
+
+    String parse(String input)
+    {
+        //Список предложений, поданных на вход
+        LinkedList<String> main_tokens = new LinkedList<>();
+        //Карта результатов вычесленных выражений и их идентификаторов
+        Map<Integer, Double> results = new HashMap<Integer,Double>();
+
+        //Счетчик для вычисления номера выражений по порядку в исходном сообщении
+        int counter = 0;
+        String result="";
+
+        //Разбиваем исходную строку на подстроки с помощью разделителя указанного в переменной SEPARATOR
+        //Третий параметр (false) не включает разделители в полученные подстроки
+        StringTokenizer mainTokenizer = new StringTokenizer(input, SEPARATOR, false);
+
+        //Пробегаем в цикле по полученным подстрокам
+        while (mainTokenizer.hasMoreTokens()) {
+            String main_token = mainTokenizer.nextToken();
+            //Если подстрока является выражением - считаем его и записываем результат в массив с индексом counter
+            if (isExpression(main_token)) {
+                //Каждый раз когда встречаем выражение инкрементим счетчик
+                counter++;
+                results.put(counter,eval(main_token));
+            }
+            //В противном случае просто храним подстроку
+            else main_tokens.add(main_token);
+        }
+
+        //Соединяем все полученные подстроки (не выражения)
+        while (!main_tokens.isEmpty())
+        {
+            result = result.concat(main_tokens.removeFirst());
+        }
+
+        //Замена ссылок значениями (примем, что ссылка на выражение оформляется с помощью следующей конструкции:{№выражения}
+        //пробегаем циклом всю полученную строку
+        for (int i = 0;i < result.length();i++) {
+            char ch = result.charAt(i);
+            //Если встречаем открывающуюся скобку - ищем соответствующую ей закрывающуюся
+            if(ch == '{') {
+                for (int j = i;j < result.length();j++) {
+                    char c = result.charAt(j);
+                    if(c == '}') {
+                        //Получаем номер выражения, значение которого необходимо вставить
+                        int index = Integer.parseInt(result.substring(i+1,j));
+                        //составляем результирующую строку со вставленным значением выражения
+                        result = result.substring(0,i)+results.get(index)+result.substring(j+1,result.length());
+                        //если нашли закрывающуюся скобку выходим из текущего цикла
+                        break;
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
+
 }
