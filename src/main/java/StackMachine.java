@@ -221,11 +221,18 @@ public class StackMachine {
                         //Получаем номер выражения, значение которого необходимо вставить
                         int index = Integer.parseInt(result.substring(i+1,j));
                         //составляем результирующую строку со вставленным значением выражения
-                        result = result.substring(0,i)+results.get(index)+result.substring(j+1,result.length());
+                        result = result.substring(0,i) + results.remove(index) + result.substring(j+1,result.length());
                         //если нашли закрывающуюся скобку выходим из текущего цикла
                         break;
                     }
                 }
+            }
+        }
+        //Если остались выражения на которые не было ссылок в тексте, просто добавляем их в результирующую строку
+        if (!results.isEmpty())
+        {
+            for (Map.Entry<Integer, Double> entry : results.entrySet()) {
+                 result = result + entry.getValue();
             }
         }
         return result;
