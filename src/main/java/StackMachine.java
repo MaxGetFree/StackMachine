@@ -2,7 +2,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 public class StackMachine {
 
     public static void main(String args[])
@@ -222,12 +221,17 @@ public class StackMachine {
                 for (int j = i;j < result.length();j++) {
                     char c = result.charAt(j);
                     if(c == '}') {
-                        //Получаем номер выражения, значение которого необходимо вставить
-                        int index = Integer.parseInt(result.substring(i+1,j));
-                        //составляем результирующую строку со вставленным значением выражения
-                        result = result.substring(0,i) + " " + results.remove(index) + " " + result.substring(j+1,result.length());
-                        //если нашли закрывающуюся скобку выходим из текущего цикла
-                        break;
+                        try {
+                            //Получаем номер выражения, значение которого необходимо вставить
+                            int index = Integer.parseInt(result.substring(i+1,j));
+                            //составляем результирующую строку со вставленным значением выражения
+                            result = result.substring(0,i) + " " + results.remove(index) + " " + result.substring(j+1,result.length());
+                            //если нашли закрывающуюся скобку выходим из текущего цикла
+                            break;
+                        }
+                        catch (NumberFormatException e){
+                            System.out.println("Ссылки могут задаваться только числами");
+                        }
                     }
                 }
             }
