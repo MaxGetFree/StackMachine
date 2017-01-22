@@ -2,9 +2,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Created by franc on 09.12.2016.
- */
+
 public class StackMachine {
 
     public static void main(String args[])
@@ -168,7 +166,13 @@ public class StackMachine {
 
         //Вычисляем оставшиеся операторы
         while(!operators.isEmpty()) {
-            calculate(digits, operators.removeLast());
+            try {
+                calculate(digits, operators.removeLast());
+            }
+            catch (NoSuchElementException e) {
+                System.out.println("Выражение записано неверно");
+                e.printStackTrace();
+            }
         }
 
         return digits.get(0);
@@ -221,18 +225,19 @@ public class StackMachine {
                         //Получаем номер выражения, значение которого необходимо вставить
                         int index = Integer.parseInt(result.substring(i+1,j));
                         //составляем результирующую строку со вставленным значением выражения
-                        result = result.substring(0,i) + results.remove(index) + result.substring(j+1,result.length());
+                        result = result.substring(0,i) + " " + results.remove(index) + " " + result.substring(j+1,result.length());
                         //если нашли закрывающуюся скобку выходим из текущего цикла
                         break;
                     }
                 }
             }
         }
+
         //Если остались выражения на которые не было ссылок в тексте, просто добавляем их в результирующую строку
         if (!results.isEmpty())
         {
             for (Map.Entry<Integer, Double> entry : results.entrySet()) {
-                 result = result + entry.getValue();
+                 result = result + " " + entry.getValue();
             }
         }
         return result;
